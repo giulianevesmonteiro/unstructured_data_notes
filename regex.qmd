@@ -1,0 +1,179 @@
+---
+title: "Regular Expressions"
+format:
+  html:
+    code-fold: true
+jupyter: python3
+---
+
+## Symbols
+
+- `.`: any character (wildcard)
+- `^`: start of a string
+- `$`: end of a string
+- `[]`: square brackets = contains the following set
+- `[^]`: negation. (doesnt contain the fllowing set)
+- `|`: or
+- `()`: capturing group
+- `*`: numeric wildcard. 0 or more
+- `+`: 1 or more
+- `?`: takes values of 0 or 1
+- `{n}`: exactly n
+- `{n,}`: n or more
+- `{n,m}`: between n and m
+- `\`: escape character
+- `\d`: digit 
+- `\D`: not a digit
+- `\w`: word
+- `\W`: not a word character
+- `\s`: whitespace 
+- `\S`: not a whitespace
+- `\b`: word boundary (can be end of a sentence, a punctuation, or whitespace)
+- `\B`: not a word boundary
+### Lookarounds 
+good for finding a pattern 
+
+- `(?=)`: Positive lookahead
+- `(?!)`: Negative lookahead
+- `(?<=)`: Positive lookbehind
+- `(?<!)`: Negative lookbehind
+
+
+## Functions
+
+### re
+re module - python's basic way of doing it
+
+```{python}
+#| eval: false
+import re
+
+string = '''
+Lil Baby helped you get your lingo up (What?)
+21 gave you false street cred
+Thug made you feel like you a slime in your head (Ayy, what?)
+Quavo said you can be from Northside (What?)
+2 Chainz say you good, but he lied
+'''
+
+re.findall('\d+', string) # find all, 1 or more digits
+
+re.sub(r'\d+', 'X', string) #substitute the following (find all d+ and substitute with X)
+
+re.split(r'\d+', string)
+
+re.match(r'\d+', string)
+
+# if u wanna check a single line of code, have to copy it line by line in the right hand console
+```
+
+
+#### On the use of r
+
+You will often see the letter `r` before the string in regular expressions. This is to denote a raw string. This is important because it tells Python to ignore any special characters in the string. For example, if you want to match a backslash, you would need to use `\\` in a regular string. However, in a raw string, you can use `\`. 
+
+### pandas
+
+```{python}
+import pandas as pd
+
+example_df = pd.DataFrame(
+    {'text': [string]}
+)
+
+example_df['text'].str.findall(r'\d+')
+
+example_df['text'].str.replace(r'\d+', 'X')
+
+example_df['text'].str.split(r'\d+')
+
+example_df['text'].str.match(r'\d+') # is there a match
+
+example_df['text'].str.extract(r'(\d+)') #have this specific pattern, get it for me
+
+example_df['text'].str.extractall(r'(\d+)') # to extract every instance of that thing
+
+example_df['text'].str.contains(r'\d+') # does it contain a string
+
+example_df['text'].str.count(r'\d+') # count strings
+```
+
+
+```{python}
+import pandas as pd
+import pyarrow as pa
+import re
+
+# remember to install, this in terminal, under command prompt = pip3 install pyarrow
+```
+
+```{python}
+test_strings = [
+    "Cant change the weatherMight not be forever", #weathermight together will be an issue
+    "[Chorus] Say you can't sleep, baby, I know that's that me espresso [verse 1]", #[chorus] we dont want it there
+    " This 9 to 5 ain't  workin', why the hell do I work so hard? ", # leaidng and trailing whitespace (whitespace at the beginning and end of a string). there are also 2 spaces in there
+    "Where there's a will, then there's a way And I'm damn sure you lost it Embedded lyrics here",  #'embedded lyrics here' shouldnt be there
+    "https://www.billboard.com/charts/hot-100/2025-01-11/"
+]
+```
+
+```{python}
+lyrics_df = pd.DataFrame(
+    {"lyrics": test_strings}
+)
+#pyarrow gives u speed
+lyrics_df['lyrics']
+```
+
+## Examples
+
+### Removing Specific Words
+
+```{python}
+lyrics_df['lyrics'].str.replace(r'Embedded.*$', '', regex=True)[3] # .*$ means find word embedded and anything that comes after it at the end of the string. replace it with nothing
+```
+
+### Removing Extra Space
+
+```{python}
+lyrics_df['lyrics'].str.replace(r'^\s|\s$', '', regex=True)[2] #replacement had to be "" (nothing) 
+```
+
+### Removing Bracketed Text
+
+```{python}
+#lyrics_df['lyrics'].str.replace(r'\[.*\]', '', regex=True)[1] # find anything within a bracket and replace everything = is wrong we dpont want it to erase everything
+
+lyrics_df['lyrics'].str.replace(r'\[.*?\]', '', regex=True)[1] # added ? (nonnumer quantifiable, removed the brackets and left the lyrics)
+```
+
+### Splitting Text
+
+```{python}
+lyrics_df['lyrics'].str.replace(r'([a-z])([A-Z])', '\\1 \\2', regex=True)[0]
+# ()() are groups. have 2 groups we want to create here.
+#lower case letter followed by upper case letter = are doing one a-z followed by A-Z
+#whenever dealing with a group they always have a name (group 1 , group 2) == \\1 \\2 this is to capture the groups. when we want to tweak something in it. could ass a hyphen betwen them or space or anything 
+```
+
+### Extracting Text
+"https://www.billboard.com/charts/hot-100/2025-01-11/"
+
+```{python}
+re.search(r'(?<=charts/).*(?=/[0-9]{4})', lyrics_df['lyrics'][4]).group(0)
+#want to pull out the 'hot-100' portion of the link
+# we have 2 groups here. added .* 
+#?<=charts/ = want to look around charts (find chart/) then it's to find another / with any digit between 0-1 exactly 4 times (to capture the year)
+#if putting ? at the beginning of a group it will become a lookaround
+
+# need to define the 2nd grup as  a look behind, so added the ?=
+```
+
+## More Work
+
+```{python}
+all_lyrics = pd.read_feather(
+    '/Users/sberry5/Documents/teaching/UDA/code/lyrics_scrape_python/complete_lyrics_2025.feather', 
+    dtype_backend='pyarrow'
+)
+```
