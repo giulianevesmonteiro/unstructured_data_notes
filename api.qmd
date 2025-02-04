@@ -38,9 +38,10 @@ Try out the agify API!
 ```{python, eval = FALSE}
 base_link = "https://api.agify.io/?name="
 
-your_name = ""
+your_name = "Giulia"
 
 complete_link = base_link + your_name
+complete_link
 ```
 
 

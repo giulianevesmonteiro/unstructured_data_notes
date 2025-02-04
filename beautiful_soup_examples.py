@@ -43,7 +43,8 @@ hot100_songs = [hot100_songs[x].text for x in song_range]
 
 # Just using some list comprehension to clean up the text
 
-hot100_songs = [re.sub('\t|\n', '', hot100_songs[x]) for x in song_range] # removing/substrituting out /t and /n
+hot100_songs = [re.sub('\t|\n', '', hot100_songs[x]) for x in song_range] 
+# removing/substrituting out /t and /n
 
 # Now I can put those into a DataFrame
 

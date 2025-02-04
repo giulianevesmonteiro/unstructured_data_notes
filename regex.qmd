@@ -137,6 +137,7 @@ lyrics_df['lyrics'].str.replace(r'Embedded.*$', '', regex=True)[3] # .*$ means f
 
 ```{python}
 lyrics_df['lyrics'].str.replace(r'^\s|\s$', '', regex=True)[2] #replacement had to be "" (nothing) 
+
 ```
 
 ### Removing Bracketed Text
